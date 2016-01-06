@@ -10,8 +10,26 @@ def create_dir(dir_name):
   if not os.path.isdir(dir_name):
     os.makedirs(dir_name)
 
+def newline_decorate(func):
+  def func_adder(text):
+    text += '\n'
+    return func(text)
+  return func_adder
+
+def log_inline(*msg):
+  print("LOG: ", *msg, end='', file=sys.stderr)
+
+@newline_decorate
 def log(*msg):
-  print("LOG: ", *msg, file=sys.stderr)
+  log_inline(*msg)
+
+def print_new_line(*msg):
+  def func_wrapper(name):
+    print('', file=sys.stderr)
+  return func_wrapper
+
+
+
 
 def textread(file_name):
   ids = []

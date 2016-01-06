@@ -77,9 +77,9 @@ def cache_FCN8s_results(config):
   ## load image set
   ids = textread(VOCopts['seg.imgsetpath'] % config['imageset'])
   
-  for i in range(2):
+  for i in range(3):
   #for i in range(len(ids)):
-      log('progress: {}/{} [{}]...'.format(i, len(ids), ids[i]))
+      log_inline('progress: {}/{} [{}]...'.format(i, len(ids), ids[i]))
       start = time.clock()
   
       # read image
