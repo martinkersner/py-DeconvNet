@@ -2,16 +2,16 @@
 # Martin Kersner, martin@company100.com
 # 2016/01/05
 
-from __future__ import print_function
 import os
 import sys
 import time
 import caffe
 import scipy.io
 
-from skimage.io import imread
+from skimage.io import imread, imsave
+from skimage.color import label2rgb
 from skimage import img_as_ubyte
-from PIL import Image
+#from PIL import Image
 
 from util.init_VOC2012_TEST import *
 from util.preprocess_image import *
@@ -26,7 +26,7 @@ def main():
   config['save_root'] = './results'
 
   # cache FCN-8s results
-  config['write_file'] = 0 # used to be 1
+  config['write_file'] = 1 # used to be 1
   config['Path.CNN.script_path'] = './FCN'
   config['Path.CNN.model_data'] = os.path.join(config['Path.CNN.script_path'], 
                                   'fcn-8s-pascal.caffemodel')
@@ -54,14 +54,10 @@ def cache_FCN8s_results(config):
   log('start caching FCN-8s results and score')
   
   ## initialization
-  #load(config.cmap)
-  cmap = scipy.io.loadmat(config['cmap'])
-  #init_VOC2012_TEST
+  cmap = scipy.io.loadmat(config['cmap'])['cmap']
 
   ## initialize caffe
-  #addpath(fullfile(config.Path.CNN.caffe_root, 'matlab/caffe'))
   log('initializing caffe..')
-  #caffe('init', config['Path.CNN.model_proto'], config['Path.CNN.model_data'])
   caffe.set_mode_gpu()
   caffe.set_device(config['gpuNum'])
   net = caffe.Net(config['Path.CNN.model_proto'], config['Path.CNN.model_data'], caffe.TEST)
@@ -71,7 +67,7 @@ def cache_FCN8s_results(config):
   save_res_dir = os.path.join(config['save_root'], 'FCN8s/results')
   save_res_path = os.path.join(save_res_dir, '%s.png')
   save_score_dir = os.path.join(config['save_root'], 'FCN8s/scores')
-  save_score_path = os.path.join(save_score_dir, '%s.mat')
+  save_score_path = os.path.join(save_score_dir, '%s.npy')
   
   ## create directory
   if config['write_file']:
@@ -79,12 +75,10 @@ def cache_FCN8s_results(config):
     create_dir(save_score_dir)
   
   ## load image set
-  path_to_dataset = '/home/martin/datasets/VOC2011/Test/VOCdevkit/VOC2011'
   ids = textread(VOCopts['seg.imgsetpath'] % config['imageset'])
-  #print(VOCopts['seg.imgsetpath'] % config['imageset'])
   
-  #for i=1:length(ids)
-  for i in range(len(ids)):
+  for i in range(2):
+  #for i in range(len(ids)):
       log('progress: {}/{} [{}]...'.format(i, len(ids), ids[i]))
       start = time.clock()
   
@@ -96,31 +90,19 @@ def cache_FCN8s_results(config):
       net.blobs['data'].reshape(1, *input_data.shape)
       net.blobs['data'].data[...] = input_data 
       net.forward()
-      cnn_output = net.blobs['score'].data[0].argmax(axis=0)
-      #cnn_output = caffe('forward', input_data)
+      result = net.blobs['upscore'].data[0]
+
+      tr_result = result.transpose((1,2,0))
+      score = tr_result[0:I.shape[0], 0:I.shape[1], :]
+      result_seg = np.argmax(score, axis=2)
+      result_seg -= 1 # TODO necessary?
       
-      #result = cnn_output{1}
-      
-      #tr_result = permute(result,[2,1,3])
-      #score = tr_result(1:size(I,1),1:size(I,2),:)
-      #
-      #[~, result_seg] = max(score,[], 3)   
-      #result_seg = uint8(result_seg-1)
-      #
-      #if config['write_file']:
-      #    imwrite(result_seg, cmap, sprintf(save_res_path, ids{i}))
-      #    save(sprintf(save_score_path, ids{i}), 'score')
-      #else:
-      #    subplot(1,2,1)
-      #    imshow(I)
-      #    subplot(1,2,2)
-      #    result_seg_im = reshape(cmap(int32(result_seg)+1,:),[size(result_seg,1),size(result_seg,2),3])
-      #    imshow(result_seg_im)
-      #    waitforbuttonpress        
+      if config['write_file']:
+        imsave(save_res_path % ids[i], label2rgb(result_seg, colors=cmap))
+        np.save(save_score_path % ids[i], score)
 
       end = time.clock()
-      print(str(end - start) + " s")
-      exit()
+      print str(end - start) + " s"
 
 if __name__ == '__main__':
   main()
