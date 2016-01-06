@@ -6,7 +6,7 @@ import caffe
 import scipy.io
 from util.utils import *
 
-def generate_EDeconvNet_CRF_results(config):
+def generate_EDeconvNet_CRF_results(config, VOCopts):
   log('start generating EDeconvNet+CRF results');
   
   ## initialization
