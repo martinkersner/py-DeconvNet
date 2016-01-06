@@ -5,11 +5,17 @@
 from __future__ import print_function
 import os
 import sys
+import time
 import caffe
 import scipy.io
+
 from skimage.io import imread
+from skimage import img_as_ubyte
+from PIL import Image
+
 from util.init_VOC2012_TEST import *
 from util.preprocess_image import *
+from util.utils import *
 
 def main():
   config = {}
@@ -45,7 +51,7 @@ def main():
   #generate_EDeconvNet_CRF_results(config)
 
 def cache_FCN8s_results(config):
-  log('start caching FCN-8s restuls and score')
+  log('start caching FCN-8s results and score')
   
   ## initialization
   #load(config.cmap)
@@ -56,9 +62,9 @@ def cache_FCN8s_results(config):
   #addpath(fullfile(config.Path.CNN.caffe_root, 'matlab/caffe'))
   log('initializing caffe..')
   #caffe('init', config['Path.CNN.model_proto'], config['Path.CNN.model_data'])
-  #caffe.set_mode_gpu()
-  #caffe.set_device(config['gpuNum'])
-  #net = caffe.Net(prototxt, model, caffe.TEST)
+  caffe.set_mode_gpu()
+  caffe.set_device(config['gpuNum'])
+  net = caffe.Net(config['Path.CNN.model_proto'], config['Path.CNN.model_data'], caffe.TEST)
   log('done')
   
   ## initialize paths
@@ -80,14 +86,18 @@ def cache_FCN8s_results(config):
   #for i=1:length(ids)
   for i in range(len(ids)):
       log('progress: {}/{} [{}]...'.format(i, len(ids), ids[i]))
-      #tic
+      start = time.clock()
   
       # read image
-      I = imread(VOCopts['imgpath'] % ids[i])
-  
+      I = img_as_ubyte(imread(VOCopts['imgpath'] % ids[i])) # TODO does load correctly?
+      #I = Image.open(VOCopts['imgpath'] % ids[i])
       input_data = preprocess_image(I, config['im_sz']) 
+
+      net.blobs['data'].reshape(1, *input_data.shape)
+      net.blobs['data'].data[...] = input_data 
+      net.forward()
+      cnn_output = net.blobs['score'].data[0].argmax(axis=0)
       #cnn_output = caffe('forward', input_data)
-      exit()
       
       #result = cnn_output{1}
       
@@ -97,33 +107,20 @@ def cache_FCN8s_results(config):
       #[~, result_seg] = max(score,[], 3)   
       #result_seg = uint8(result_seg-1)
       #
-      #if config.write_file
+      #if config['write_file']:
       #    imwrite(result_seg, cmap, sprintf(save_res_path, ids{i}))
       #    save(sprintf(save_score_path, ids{i}), 'score')
-      #else
+      #else:
       #    subplot(1,2,1)
       #    imshow(I)
       #    subplot(1,2,2)
       #    result_seg_im = reshape(cmap(int32(result_seg)+1,:),[size(result_seg,1),size(result_seg,2),3])
       #    imshow(result_seg_im)
       #    waitforbuttonpress        
-      #end
-      #fprintf(' done [%f]\n', toc)
 
-def create_dir(dir_name):
-  if not os.path.isdir(dir_name):
-    os.makedirs(dir_name)
-
-def log(*msg):
-  print("LOG: ", *msg, file=sys.stderr)
-
-def textread(file_name):
-  ids = []
-  with open(file_name, 'r') as f:
-    for line in f:
-     ids.append(line.strip()) 
-
-  return ids
+      end = time.clock()
+      print(str(end - start) + " s")
+      exit()
 
 if __name__ == '__main__':
   main()
