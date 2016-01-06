@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Martin Kersner, martin@company100.com
 # 2016/01/05
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Martin Kersner, martin@company100.com
 # 2016/01/05
 
@@ -9,6 +9,7 @@ import caffe
 import scipy.io
 from skimage.io import imread
 from util.init_VOC2012_TEST import *
+from util.preprocess_image import *
 
 def main():
   config = {}
@@ -84,11 +85,12 @@ def cache_FCN8s_results(config):
       # read image
       I = imread(VOCopts['imgpath'] % ids[i])
   
-      input_data = preprocess_image(I, config.im_sz) 
+      input_data = preprocess_image(I, config['im_sz']) 
       #cnn_output = caffe('forward', input_data)
-      #
+      exit()
+      
       #result = cnn_output{1}
-      #
+      
       #tr_result = permute(result,[2,1,3])
       #score = tr_result(1:size(I,1),1:size(I,2),:)
       #
