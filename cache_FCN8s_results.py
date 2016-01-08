@@ -56,12 +56,12 @@ def cache_FCN8s_results(config, VOCopts):
       net.blobs['data'].reshape(1, *input_data.shape)
       net.blobs['data'].data[...] = input_data 
       net.forward()
-      result = net.blobs['upscore'].data[0]
+      cnn_output = net.blobs['upscore'].data[0]
 
-      tr_result = result.transpose((1,2,0))
+      tr_result = cnn_output.transpose((1,2,0))
       score = tr_result[0:I.shape[0], 0:I.shape[1], :]
       result_seg = np.argmax(score, axis=2)
-      result_seg -= 1 # TODO necessary?
+      #result_seg -= 1 # TODO necessary?
       
       if config['write_file']:
         imsave(save_res_path % ids[i], label2rgb(result_seg, colors=cmap))

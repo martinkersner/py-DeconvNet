@@ -2,8 +2,18 @@
 # Martin Kersner, martin@company100.com
 # 2016/01/06
 
+import time
+
 import caffe
+import numpy as np
+
 import scipy.io
+#from scipy.misc import imresize
+
+from skimage.io import imread, imsave
+from skimage import img_as_ubyte
+
+from util.preprocess_image_bb import *
 from util.utils import *
 
 def generate_EDeconvNet_CRF_results(config, VOCopts):
@@ -18,146 +28,142 @@ def generate_EDeconvNet_CRF_results(config, VOCopts):
   caffe.set_mode_gpu()
   caffe.set_device(config['gpuNum'])
   net = caffe.Net(config['Path.CNN.model_proto'], config['Path.CNN.model_data'], caffe.TEST)
-  caffe('set_phase_test');
   log('done');
   
   ## initialize paths
-  #save_res_dir = [config.save_root, '/EDeconvNet_CRF'];
-  #save_res_path = [save_res_dir, '/%s.png'];
-  #edgebox_cache_path = [config.edgebox_cache_dir '/%s.mat'];
-  #
-  #fcn_score_dir = [config.fcn_score_dir '/scores'];
-  #fcn_score_path = [fcn_score_dir '/%s.mat'];
-  #
-  #%% create directory
-  #if config.write_file
-  #    if ~exist(save_res_dir), mkdir(save_res_dir), end
-  #end
-  #
-  #
-  #fprintf('start generating result\n');
-  #fprintf('caffe model: %s\n', config.Path.CNN.model_proto);
-  #fprintf('caffe weight: %s\n', config.Path.CNN.model_data);
-  #
-  #
-  #%% read VOC2012 TEST image set
-  #ids=textread(sprintf(VOCopts.seg.imgsetpath, config.imageset), '%s');
-  #
-  #for i=1:length(ids)
-  #    fprintf('progress: %d/%d [%s]...', i, length(ids), ids{i});  
-  #    tic;
-  #    
-  #    % read image
-  #    I=imread(sprintf(VOCopts.imgpath,ids{i}));
-  #    
-  #    result_base = uint8(zeros(size(I,1), size(I,2)));
-  #    prob_base = zeros(size(I,1),size(I,2),21);
-  #    cnt_base = uint8(zeros(size(I,1),size(I,2)));
-  #    norm_prob_base = zeros(size(I,1),size(I,2),21);
-  #        
-  #    % padding for easy cropping    
-  #    [img_height, img_width, ~] = size(I);
-  #    pad_offset_col = img_height;
-  #    pad_offset_row = img_width;
-  #    
-  #    % pad every images(I, cls_seg, inst_seg...) to make cropping easy
-  #    padded_I = padarray(I,[pad_offset_row, pad_offset_col]);
-  #    padded_result_base = padarray(result_base,[pad_offset_row, pad_offset_col]);
-  #    padded_prob_base = padarray(prob_base,[pad_offset_row, pad_offset_col]);
-  #    padded_cnt_base = padarray(cnt_base, [pad_offset_row, pad_offset_col]);
-  #    norm_padded_prob_base = padarray(norm_prob_base,[pad_offset_row, pad_offset_col]);
-  #    norm_padded_prob_base(:,:,1) = eps;
-  #        
-  #    padded_frame_255 = 255-padarray(uint8(ones(size(I,1),size(I,2))*255),[pad_offset_row, pad_offset_col]);
-  #    
-  #    padded_result_base = padded_result_base + padded_frame_255;
-  #
-  #    %% load extended bounding box
-  #    cache = load(sprintf(edgebox_cache_path, ids{i})); % boxes_padded
-  #    boxes_padded = cache.boxes_padded;
-  #    
-  #    numBoxes = size(boxes_padded,1);    
-  #    cnt_process = 1;
-  #    for bidx = 1:numBoxes  
-  #        box = boxes_padded(bidx,:);
-  #        box_wd = box(3)-box(1)+1;
-  #        box_ht = box(4)-box(2)+1;
-  #        
-  #        if min(box_wd, box_ht) < 112, continue; end   
-  #        
-  #        input_data = preprocess_image_bb(padded_I, boxes_padded(bidx,:), config.im_sz); 
-  #        cnn_output = caffe('forward', input_data);
-  #        
-  #        segImg = permute(cnn_output{1}, [2, 1, 3]);
-  #        segImg = imresize(segImg, [box_ht, box_wd], 'bilinear');
-  #        
-  #        % accumulate prediction result
-  #        cropped_prob_base = padded_prob_base(box(2):box(4),box(1):box(3),:);
-  #        padded_prob_base(box(2):box(4),box(1):box(3),:) = max(cropped_prob_base,segImg);
-  #        
-  #        if mod(cnt_process, 10) == 0, fprintf(',%d', cnt_process); end
-  #        if cnt_process >= config.max_proposal_num
-  #            break;
-  #        end
-  #        
-  #        cnt_process = cnt_process + 1;
-  #    end
-  #    
-  #    %% save DeconvNet prediction score
-  #    deconv_score = padded_prob_base(pad_offset_row:pad_offset_row+size(I,1)-1,pad_offset_col:pad_offset_col+size(I,2)-1,:);
-  #    
-  #    %% load fcn-8s score
-  #    fcn_cache = load(sprintf(fcn_score_path, ids{i}));
-  #    fcn_score = fcn_cache.score;
-  #    
-  #    %% ensemble
-  #    zero_mask = zeros(size(fcn_score));
-  #    fcn_score = max(zero_mask,fcn_score);
-  #        
-  #    ens_score = deconv_score .* fcn_score;
-  #    [ens_segscore, ens_segmask] = max(ens_score, [], 3);
-  #    ens_segmask = uint8(ens_segmask-1);
-  #    
-  #    %% densecrf
-  #    fprintf('[densecrf.. ');
-  #    prob_map = exp(ens_score - repmat(max(ens_score, [], 3), [1,1,size(ens_score,3)]));
-  #    prob_map = prob_map ./ repmat(sum(prob_map, 3), [1,1, size(prob_map,3)]);
-  #    unary = -log(prob_map);
-  #
-  #    D = Densecrf(I,single(unary));
-  #
-  #    % Some settings.
-  #    D.gaussian_x_stddev = 3;
-  #    D.gaussian_y_stddev = 3;
-  #    D.gaussian_weight = 3; 
-  #
-  #    D.bilateral_x_stddev = 20;
-  #    D.bilateral_y_stddev = 20;
-  #    D.bilateral_r_stddev = 3;
-  #    D.bilateral_g_stddev = 3;
-  #    D.bilateral_b_stddev = 3;
-  #    D.bilateral_weight = 5;     
-  #   
-  #    D.iterations = 10;
-  #
-  #    D.mean_field;
-  #    segmask = D.segmentation;
-  #    resulting_seg = uint8(segmask-1);    
-  #    fprintf('done] ');
-  #    
-  #    %% save or display result
-  #    if config.write_file
-  #        imwrite(resulting_seg,cmap,sprintf(save_res_path, ids{i}));
-  #    else
-  #        subplot(1,2,1);
-  #        imshow(I);
-  #        subplot(1,2,2);
-  #        resulting_seg_im = reshape(cmap(int32(resulting_seg)+1,:),[size(resulting_seg,1),size(resulting_seg,2),3]);
-  #        imshow(resulting_seg_im);
-  #        waitforbuttonpress;
-  #    end
-  #    fprintf(' done [%f]\n', toc);
-  #end
-  #
-  #%% function end
-  #end
+  save_res_dir = path_join(config['save_root'], 'EDeconvNet_CRF')
+  save_res_path = path_join(save_res_dir, '%s.png')
+  edgebox_cache_path = path_join(config['edgebox_cache_dir'], '%s.mat')
+  
+  fcn_score_dir = path_join(config['fcn_score_dir'], 'scores')
+  fcn_score_path = path_join(fcn_score_dir, '%s.npy')
+  
+  ## create directory
+  if config['write_file']:
+    create_dir(save_res_dir)
+  
+  log('start generating result')
+  log('caffe model: {}'.format(config['Path.CNN.model_proto']))
+  log('caffe weight: {}'.format(config['Path.CNN.model_data']))
+  
+  
+  ## read VOC2012 TEST image set
+  ids = textread(VOCopts['seg.imgsetpath'] % config['imageset'])
+  
+  for i in range(1):
+  #for i in range(len(ids)):
+    log_inline('progress: {}/{} [{}]...'.format(i, len(ids), ids[i]))
+    start = time.clock()
+      
+    # read image
+    I = img_as_ubyte(imread(VOCopts['imgpath'] % ids[i])) # TODO does load correctly?
+      
+    result_base    = np.zeros((I.shape[0], I.shape[1]), dtype=np.uint8) 
+    prob_base      = np.zeros((I.shape[0], I.shape[1], 21));
+    cnt_base       = np.zeros((I.shape[0], I.shape[1]), dtype=np.uint8) 
+    norm_prob_base = np.zeros((I.shape[0], I.shape[1], 21));
+          
+    # padding for easy cropping    
+    pad_offset_col = I.shape[0]
+    pad_offset_row = I.shape[1]
+      
+    # pad every images(I, cls_seg, inst_seg...) to make cropping easy
+    offset_2d = ((pad_offset_row,pad_offset_row), (pad_offset_col,pad_offset_col))
+    offset_3d = ((pad_offset_row,pad_offset_row), (pad_offset_col,pad_offset_col), (0, 0))
+    padded_I = np.pad(I, offset_3d, 'constant', constant_values=(0))
+    padded_result_base = np.pad(result_base, offset_2d, 'constant', constant_values=(0))
+    padded_prob_base = np.pad(prob_base, offset_3d, 'constant', constant_values=(0))
+    padded_cnt_base = np.pad(cnt_base, offset_2d, 'constant', constant_values=(0))
+    norm_padded_prob_base = np.pad(norm_prob_base, offset_3d, 'constant', constant_values=(0))
+    norm_padded_prob_base[:,:,1] = np.spacing(1) # Equivalent to Matlab's eps?
+          
+    # TODO refactor!
+    #padded_frame_255 = 255-padarray(uint8(ones(size(I,1),size(I,2))*255),[pad_offset_row, pad_offset_col]);
+    padded_frame_255 = 255-np.pad((np.ones((I.shape[0], I.shape[1]), dtype=np.uint8)*255), offset_2d, 'constant', constant_values=(0))
+      
+    padded_result_base = padded_result_base + padded_frame_255
+  
+    ## load extended bounding box
+    cache = scipy.io.loadmat(edgebox_cache_path % ids[i]) # boxes_padded
+    boxes_padded = cache['boxes_padded'].astype(np.uint16)
+      
+    numBoxes = boxes_padded.shape[0]    
+    cnt_process = 1
+    for bidx in range(numBoxes):
+      box = boxes_padded[bidx, :]
+      box_wd = box[2]-box[0]
+      box_ht = box[3]-box[1]
+          
+      if min(box_wd, box_ht) < 112:
+        continue
+          
+      input_data = preprocess_image_bb(padded_I, boxes_padded[bidx, :], config['im_sz'])
+      net.blobs['data'].reshape(1, *input_data.shape)
+      net.blobs['data'].data[...] = input_data 
+      net.forward()
+      cnn_output = net.blobs['seg-score'].data[0]
+          
+      segImg = cnn_output.transpose((1,2,0))
+      segImg = arrresize_ndim(segImg, (box_ht, box_wd, 21), 'bilinear')
+          
+      # accumulate prediction result
+      cropped_prob_base = padded_prob_base[box[1]:box[3], box[0]:box[2], :]
+      padded_prob_base[box[1]:box[3], box[0]:box[2], :] = np.maximum(cropped_prob_base, segImg)
+          
+      if (cnt_process % 10) == 0:
+        log(' %d' % cnt_process) # TODO prograss bar class
+        
+      if cnt_process >= config['max_proposal_num']:
+        break;
+          
+      cnt_process = cnt_process + 1;
+      
+    ## save DeconvNet prediction score
+    deconv_score = padded_prob_base[pad_offset_row:pad_offset_row+I.shape[0], 
+                                    pad_offset_col:pad_offset_col+I.shape[1],
+                                    :]
+      
+    ## load fcn-8s score
+    fcn_score = np.load(fcn_score_path % ids[i])
+      
+    ## ensemble
+    zero_mask = np.zeros_like(fcn_score)
+    fcn_score = np.maximum(zero_mask, fcn_score)
+          
+    ens_score = np.multiply(deconv_score, fcn_score)
+    ens_segscore = np.amax(ens_score, axis=2)
+    ens_segmask = np.argmax(ens_score, axis=2)
+      
+    ## densecrf
+    log('[densecrf.. ');
+    prob_map = np.exp(ens_score-ens_segscore[:,:,None])
+    prob_map = prob_map / np.sum(prob_map, axis=2)[:,:,None]
+    unary = -np.log(prob_map) # TODO check!! divide by zero encountered in log
+  
+    #D = Densecrf(I,single(unary));
+    
+    # Some settings.
+    #D.gaussian_x_stddev = 3;
+    #D.gaussian_y_stddev = 3;
+    #D.gaussian_weight = 3; 
+    #
+    #D.bilateral_x_stddev = 20;
+    #D.bilateral_y_stddev = 20;
+    #D.bilateral_r_stddev = 3;
+    #D.bilateral_g_stddev = 3;
+    #D.bilateral_b_stddev = 3;
+    #D.bilateral_weight = 5;     
+    #
+    #D.iterations = 10;
+    #
+    #D.mean_field;
+    #segmask = D.segmentation;
+    #resulting_seg = uint8(segmask-1);    
+    log('done] ');
+      
+    ## save or display result
+    if config['write_file']:
+      imsave(save_res_path % ids[i], label2rgb(resulting_seg, colors=cmap))
+  
+    end = time.clock()
+    log(' done [{:f}]'.format(end))

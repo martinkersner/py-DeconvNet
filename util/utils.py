@@ -5,6 +5,8 @@
 from __future__ import print_function
 import os
 import sys
+import numpy as np
+from scipy.misc import imresize
 
 def create_dir(dir_name):
   if not os.path.isdir(dir_name):
@@ -28,8 +30,8 @@ def print_new_line(*msg):
     print('', file=sys.stderr)
   return func_wrapper
 
-
-
+def path_join(*path):
+  return os.path.join(*path)
 
 def textread(file_name):
   ids = []
@@ -38,3 +40,12 @@ def textread(file_name):
      ids.append(line.strip()) 
 
   return ids
+
+def arrresize_ndim(array, new_dims, interp='bilinear'):
+  ndims = array.shape[2]
+  arr_resized = np.zeros(new_dims, dtype=array.dtype.type)
+
+  for i in range(ndims):
+    arr_resized[:,:,i] = imresize(array[:,:,i], new_dims, interp=interp)
+
+  return arr_resized
