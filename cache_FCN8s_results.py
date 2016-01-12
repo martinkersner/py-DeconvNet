@@ -2,7 +2,6 @@
 # Martin Kersner, martin@company100.com
 # 2016/01/06
 
-import os
 import time
 
 import caffe
@@ -30,10 +29,10 @@ def cache_FCN8s_results(config, VOCopts):
   log('done')
   
   ## initialize paths
-  save_res_dir = os.path.join(config['save_root'], 'FCN8s/results')
-  save_res_path = os.path.join(save_res_dir, '%s.png')
-  save_score_dir = os.path.join(config['save_root'], 'FCN8s/scores')
-  save_score_path = os.path.join(save_score_dir, '%s.npy')
+  save_res_dir = path_join(config['save_root'], 'FCN8s/results')
+  save_res_path = path_join(save_res_dir, '%s.png')
+  save_score_dir = path_join(config['save_root'], 'FCN8s/scores')
+  save_score_path = path_join(save_score_dir, '%s.npy')
   
   ## create directory
   if config['write_file']:
@@ -43,7 +42,7 @@ def cache_FCN8s_results(config, VOCopts):
   ## load image set
   ids = textread(VOCopts['seg.imgsetpath'] % config['imageset'])
   
-  for i in range(3):
+  for i in range(1):
   #for i in range(len(ids)):
       log_inline('progress: {}/{} [{}]...'.format(i, len(ids), ids[i]))
       start = time.clock()
