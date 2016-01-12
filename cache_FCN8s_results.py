@@ -30,9 +30,9 @@ def cache_FCN8s_results(config, VOCopts):
   
   ## initialize paths
   save_res_dir = path_join(config['save_root'], 'FCN8s/results')
-  save_res_path = path_join(save_res_dir, '%s.png')
+  save_res_path = path_join(save_res_dir, '{}.png')
   save_score_dir = path_join(config['save_root'], 'FCN8s/scores')
-  save_score_path = path_join(save_score_dir, '%s.npy')
+  save_score_path = path_join(save_score_dir, '{}.npy')
   
   ## create directory
   if config['write_file']:
@@ -40,7 +40,7 @@ def cache_FCN8s_results(config, VOCopts):
     create_dir(save_score_dir)
   
   ## load image set
-  ids = textread(VOCopts['seg.imgsetpath'] % config['imageset'])
+  ids = textread(VOCopts['seg.imgsetpath'].format(config['imageset']))
   
   for i in range(1):
   #for i in range(len(ids)):
@@ -48,8 +48,8 @@ def cache_FCN8s_results(config, VOCopts):
       start = time.clock()
   
       # read image
-      I = img_as_ubyte(imread(VOCopts['imgpath'] % ids[i])) # TODO does load correctly?
-      #I = Image.open(VOCopts['imgpath'] % ids[i])
+      I = img_as_ubyte(imread(VOCopts['imgpath'].format(ids[i]))) # TODO does load correctly?
+      #I = Image.open(VOCopts['imgpath'].format(ids[i]))
       input_data = preprocess_image(I, config['im_sz']) 
 
       net.blobs['data'].reshape(1, *input_data.shape)
@@ -63,8 +63,8 @@ def cache_FCN8s_results(config, VOCopts):
       #result_seg -= 1 # TODO necessary?
       
       if config['write_file']:
-        imsave(save_res_path % ids[i], label2rgb(result_seg, colors=cmap))
-        np.save(save_score_path % ids[i], score)
+        imsave(save_res_path.format(ids[i]), label2rgb(result_seg, colors=cmap))
+        np.save(save_score_path.format(ids[i]), score)
 
       end = time.clock()
       print str(end - start) + " s"

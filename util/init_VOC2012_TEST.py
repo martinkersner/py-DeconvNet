@@ -37,35 +37,35 @@ VOCopts['testset'] = 'test' # use test set for final challenge
 
 # initialize main challenge paths
 
-VOCopts['annopath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'Annotations/%s.xml')
-VOCopts['imgpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'JPEGImages/%s.jpg')
-VOCopts['imgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Main/%s.txt')
-VOCopts['clsimgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Main/%s_%s.txt')
-VOCopts['clsrespath'] = os.path.join(VOCopts['resdir'], 'Main/%s_cls_', VOCopts['testset'], '_%s.txt')
-VOCopts['detrespath'] = os.path.join(VOCopts['resdir'], 'Main/%s_det_', VOCopts['testset'], '_%s.txt')
+VOCopts['annopath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'Annotations/{}.xml')
+VOCopts['imgpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'JPEGImages/{}.jpg')
+VOCopts['imgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Main/{}.txt')
+VOCopts['clsimgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Main/{}_{}.txt')
+VOCopts['clsrespath'] = os.path.join(VOCopts['resdir'], 'Main/{}_cls_', VOCopts['testset'], '_{}.txt')
+VOCopts['detrespath'] = os.path.join(VOCopts['resdir'], 'Main/{}_det_', VOCopts['testset'], '_{}.txt')
 
 # initialize segmentation task paths
 
-VOCopts['seg.clsimgpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'SegmentationClass/%s.png')
-VOCopts['seg.instimgpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'SegmentationObject/%s.png')
+VOCopts['seg.clsimgpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'SegmentationClass/{}.png')
+VOCopts['seg.instimgpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'SegmentationObject/{}.png')
 
-VOCopts['seg.imgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Segmentation/%s.txt')
+VOCopts['seg.imgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Segmentation/{}.txt')
 
-VOCopts['seg.clsresdir'] = os.path.join(VOCopts['resdir'], 'Segmentation/%s_%s_cls')
-VOCopts['seg.instresdir'] = os.path.join(VOCopts['resdir'], 'Segmentation/%s_%s_inst')
-VOCopts['seg.clsrespath'] = os.path.join(VOCopts['seg.clsresdir'], '%s.png')
-VOCopts['seg.instrespath'] = os.path.join(VOCopts['seg.instresdir'], '%s.png')
+VOCopts['seg.clsresdir'] = os.path.join(VOCopts['resdir'], 'Segmentation/{}_{}_cls')
+VOCopts['seg.instresdir'] = os.path.join(VOCopts['resdir'], 'Segmentation/{}_{}_inst')
+VOCopts['seg.clsrespath'] = os.path.join(VOCopts['seg.clsresdir'], '{}.png')
+VOCopts['seg.instrespath'] = os.path.join(VOCopts['seg.instresdir'], '{}.png')
 
 # initialize layout task paths
 
-VOCopts['layout.imgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Layout/%s.txt')
-VOCopts['layout.respath'] = os.path.join(VOCopts['resdir'], 'Layout/%s_layout_', VOCopts['testset'], '.xml')
+VOCopts['layout.imgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Layout/{}.txt')
+VOCopts['layout.respath'] = os.path.join(VOCopts['resdir'], 'Layout/{}_layout_', VOCopts['testset'], '.xml')
 
 # initialize action task paths
 
-VOCopts['action.imgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Action/%s.txt')
-VOCopts['action.clsimgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Action/%s_%s.txt')
-VOCopts['action.respath'] = os.path.join(VOCopts['resdir'], 'Action/%s_action_', VOCopts['testset'], '_%s.txt')
+VOCopts['action.imgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Action/{}.txt')
+VOCopts['action.clsimgsetpath'] = os.path.join(VOCopts['datadir'], VOCopts['dataset'], 'ImageSets/Action/{}_{}.txt')
+VOCopts['action.respath'] = os.path.join(VOCopts['resdir'], 'Action/{}_action_', VOCopts['testset'], '_{}.txt')
 
 # initialize the VOC challenge options
 
@@ -140,8 +140,8 @@ VOCopts['minoverlap'] = 0.5
 
 # annotation cache for evaluation
 
-VOCopts['annocachepath'] = os.path.join(VOCopts['localdir'], '%s_anno.mat')
+VOCopts['annocachepath'] = os.path.join(VOCopts['localdir'], '{}_anno.mat')
 
 # options for example implementations
 
-VOCopts['exfdpath'] = os.path.join(VOCopts['localdir'], '%s_fd.mat')
+VOCopts['exfdpath'] = os.path.join(VOCopts['localdir'], '{}_fd.mat')
